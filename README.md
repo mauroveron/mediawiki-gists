@@ -9,10 +9,10 @@ Clone into your wiki's extension directory:
 
     git clone https://github.com/mauroveron/mediawiki-gists.git extensions/gists
 
-require the extension from `LocalSettings.php`
+add the extension to your `LocalSettings.php`
 
-    ...
-    require_once "$IP/extensions/gists/gists.php";
-    ...
+```php
+require_once "$IP/extensions/gists/gists.php";
+```
 
 that's it! :)

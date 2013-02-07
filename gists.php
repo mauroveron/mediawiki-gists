@@ -19,54 +19,58 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  * http://www.gnu.org/copyleft/gpl.html
- */
-
-/**
+ *
  * @file
  * @ingroup Extensions
  * @author Mauro Veron <opensource@mauroveron.com>
- *
- * This extension allows embedding of Github's gists using the <gist> tag
- * like so: <gist>12345678</gist>.
- *
  */
 
 $wgExtensionCredits['gists'][] = array(
 	'path' => __FILE__,
 	'name' => 'Gists',
 	'author' => 'Mauro Veron',
-	'url' => '',
+	'url' => 'http://www.mediawiki.org/wiki/Extension:Gists',
 	'description' => 'Show embedded gists on your wiki.',
 	'version' => 1.0
 );
 
 $wgHooks['ParserFirstCallInit'][] = 'mvGists';
 
-function mvGists(Parser $parser) {
-	$parser->setHook('gist', 'mvGistRender');
+/**
+ * Add the <gist> tag to the parser.
+ *
+ * @param Parser $parser Parser object
+ * @return bool true
+ */
+function mvGists( Parser $parser ) {
+	$parser->setHook( 'gist', 'mvGistRender' );
 	return true;
 }
 
 /**
  * Parses $input (gist number) and embeds gist code.
+ *
+ * @param string $input Contents of tag
+ * @param array $args Attributes to the tag
+ * @param Parser $parser Parser object
+ * @param PPFrame $frame Current parser grame
  */
-function mvGistRender($input, $args, $parser, $frame) {
-	if( isset( $args['files'] ) ) {
+function mvGistRender( $input, array $args, Parser $parser, PPFrame $frame ) {
+	if( !empty( $args['files'] ) ) {
 		$files = explode( ' ', $args['files'] );
-	} elseif( isset( $args['file'] ) ) {
+	} elseif( !empty( $args['file'] ) ) {
 		$files = array( $args['file'] );
 	} else {
-		$files = null;
+		$files = array( '' );
 	}
 
-	if( !preg_match('/^\s*[0-9a-f]+\s*$/i', $input ) ) {
+	if( !ctype_xdigit( $input ) ) {
 		return '!!! Invalid gist number';
-	} elseif( $files === null ) {
-		return '<script src="https://gist.github.com/' . trim( $input ) . '.js"></script>';
 	} else {
+		$gistId = trim( $input );
 		$output = '';
 		foreach( $files as $file ) {
-			$output .= '<script src="https://gist.github.com/' . trim( $input ) . '.js?file=' . trim( $file ) . '"></script>';
+			$output .= Html::linkedScript( "https://gist.github.com/{$input}.js?file={$file}" );
 		}
 		return $output;
 	}

@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Syntax highlighting extension for MediaWiki 1.5 using GeSHi
+ * Extension for MediaWiki to include GitHub Gists in pages.
  * Copyright (C) 2005 Brion Vibber <brion@pobox.com>
  * http://www.mediawiki.org/
  *
@@ -31,30 +32,42 @@
  */
 
 $wgExtensionCredits['gists'][] = array(
-  'path' => __FILE__,
-  'name' => 'Gists',
-  'author' => 'Mauro Veron',
-  'url' => '',
-  'description' => 'Show embedded gists on your wiki.',
-  'version' => 1.0,
+	'path' => __FILE__,
+	'name' => 'Gists',
+	'author' => 'Mauro Veron',
+	'url' => '',
+	'description' => 'Show embedded gists on your wiki.',
+	'version' => 1.0
 );
 
 $wgHooks['ParserFirstCallInit'][] = 'mvGists';
 
-function mvGists(Parser $parser)
-{
-  $parser->setHook('gist', 'mvGistRender');
-  return true;
+function mvGists(Parser $parser) {
+	$parser->setHook('gist', 'mvGistRender');
+	return true;
 }
 
 /**
  * Parses $input (gist number) and embeds gist code.
  */
-function mvGistRender($input, $args, $parser, $frame)
-{
-  if (preg_match('/^\s*[0-9]+\s*$/', $input)) {
-    return '<script src="https://gist.github.com/'.trim($input).'.js"> </script>';
-  } else {
-    return '!!! Invalid gist number';
-  }
+function mvGistRender($input, $args, $parser, $frame) {
+	if( isset( $args['files'] ) ) {
+		$files = explode( ' ', $args['files'] );
+	} elseif( isset( $args['file'] ) ) {
+		$files = array( $args['file'] );
+	} else {
+		$files = null;
+	}
+
+	if( !preg_match('/^\s*[0-9a-f]+\s*$/i', $input ) ) {
+		return '!!! Invalid gist number';
+	} elseif( $files === null ) {
+		return '<script src="https://gist.github.com/' . trim( $input ) . '.js"></script>';
+	} else {
+		$output = '';
+		foreach( $files as $file ) {
+			$output .= '<script src="https://gist.github.com/' . trim( $input ) . '.js?file=' . trim( $file ) . '"></script>';
+		}
+		return $output;
+	}
 }

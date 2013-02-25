@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Syntax highlighting extension for MediaWiki 1.5 using GeSHi
+ * Extension for MediaWiki to include GitHub Gists in pages.
  * Copyright (C) 2005 Brion Vibber <brion@pobox.com>
  * http://www.mediawiki.org/
  *
@@ -18,43 +19,59 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  * http://www.gnu.org/copyleft/gpl.html
- */
-
-/**
+ *
  * @file
  * @ingroup Extensions
  * @author Mauro Veron <opensource@mauroveron.com>
- *
- * This extension allows embedding of Github's gists using the <gist> tag
- * like so: <gist>12345678</gist>.
- *
  */
 
 $wgExtensionCredits['gists'][] = array(
-  'path' => __FILE__,
-  'name' => 'Gists',
-  'author' => 'Mauro Veron',
-  'url' => '',
-  'description' => 'Show embedded gists on your wiki.',
-  'version' => 1.0,
+	'path' => __FILE__,
+	'name' => 'Gists',
+	'author' => 'Mauro Veron',
+	'url' => 'http://www.mediawiki.org/wiki/Extension:Gists',
+	'description' => 'Show embedded gists on your wiki.',
+	'version' => 1.0
 );
 
 $wgHooks['ParserFirstCallInit'][] = 'mvGists';
 
-function mvGists(Parser $parser)
-{
-  $parser->setHook('gist', 'mvGistRender');
-  return true;
+/**
+ * Add the <gist> tag to the parser.
+ *
+ * @param Parser $parser Parser object
+ * @return bool true
+ */
+function mvGists( Parser $parser ) {
+	$parser->setHook( 'gist', 'mvGistRender' );
+	return true;
 }
 
 /**
  * Parses $input (gist number) and embeds gist code.
+ *
+ * @param string $input Contents of tag
+ * @param array $args Attributes to the tag
+ * @param Parser $parser Parser object
+ * @param PPFrame $frame Current parser grame
  */
-function mvGistRender($input, $args, $parser, $frame)
-{
-  if (preg_match('/^\s*[0-9]+\s*$/', $input)) {
-    return '<script src="https://gist.github.com/'.trim($input).'.js"> </script>';
-  } else {
-    return '!!! Invalid gist number';
-  }
+function mvGistRender( $input, array $args, Parser $parser, PPFrame $frame ) {
+	if( !empty( $args['files'] ) ) {
+		$files = explode( ' ', $args['files'] );
+	} elseif( !empty( $args['file'] ) ) {
+		$files = array( $args['file'] );
+	} else {
+		$files = array( '' );
+	}
+
+	if( !ctype_xdigit( $input ) ) {
+		return '!!! Invalid gist number';
+	} else {
+		$gistId = trim( $input );
+		$output = '';
+		foreach( $files as $file ) {
+			$output .= Html::linkedScript( "https://gist.github.com/{$input}.js?file={$file}" );
+		}
+		return $output;
+	}
 }
